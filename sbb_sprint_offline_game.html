@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SBB Sprint: Escape the Teachers!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #e0f7fa;
+            font-family: sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to top, #c8e6c9, #fff);
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<div id="score">Score: 0</div>
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let player = { x: 50, y: 300, width: 40, height: 40, vy: 0, jumpPower: -10, gravity: 0.5, grounded: true };
+    let obstacles = [];
+    let score = 0;
+    let gameSpeed = 3;
+    let gameRunning = true;
+
+    function drawPlayer() {
+        ctx.fillStyle = "#00796b";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawObstacle(obstacle) {
+        ctx.fillStyle = "#d32f2f";
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    }
+
+    function spawnObstacle() {
+        let height = Math.random() * 30 + 20;
+        obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height });
+    }
+
+    function update() {
+        if (!gameRunning) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update player
+        player.vy += player.gravity;
+        player.y += player.vy;
+        if (player.y >= canvas.height - player.height) {
+            player.y = canvas.height - player.height;
+            player.vy = 0;
+            player.grounded = true;
+        }
+
+        drawPlayer();
+
+        // Update obstacles
+        obstacles.forEach((obs, i) => {
+            obs.x -= gameSpeed;
+            drawObstacle(obs);
+            if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+            // Collision check
+            if (player.x < obs.x + obs.width &&
+                player.x + player.width > obs.x &&
+                player.y < obs.y + obs.height &&
+                player.y + player.height > obs.y) {
+                gameRunning = false;
+                document.getElementById("score").textContent = "Game Over! Final Score: " + score;
+            }
+        });
+
+        // Score
+        score++;
+        document.getElementById("score").textContent = "Score: " + score;
+
+        // Random obstacle spawn
+        if (Math.random() < 0.02) spawnObstacle();
+
+        requestAnimationFrame(update);
+    }
+
+    window.addEventListener("keydown", function(e) {
+        if ((e.code === "Space" || e.code === "ArrowUp") && player.grounded) {
+            player.vy = player.jumpPower;
+            player.grounded = false;
+        }
+    });
+
+    update();
+</script>
+</body>
+</html>
